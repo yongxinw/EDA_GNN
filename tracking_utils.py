@@ -282,7 +282,7 @@ class tracker():
                                                                              CoordPrediction[2], CoordPrediction[3]
 
                     DeathData[0] += 1  # frame update
-                    CurData = np.concatenate((CurData, DeathData.reshape(1, -1)))
+                    # CurData = np.concatenate((CurData, DeathData.reshape(1, -1)))
                     print("ID %d coordinates predicted" % deathID)
 
         # step 4: birth process:

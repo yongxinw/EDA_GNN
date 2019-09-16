@@ -73,8 +73,8 @@ class ANet(nn.Module):
         self.conv3 = nn.Conv2d(int(self.ndf * 1.5), self.ndf * 2, kernel_size=3, stride=1, padding=1, bias=False)
         self.conv4 = nn.Conv2d(self.ndf * 2, self.ndf * 4, kernel_size=3, stride=1, padding=1, bias=False)
 
-        # Note: Added by yongxinw. The code will not work because of the mismatching shapes
-        self.fc = nn.Linear(384, 128)
+        # # Note: Added by yongxinw. The code will not work because of the mismatching shapes
+        # self.fc = nn.Linear(384, 128)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -89,11 +89,15 @@ class ANet(nn.Module):
         x = F.relu(x)
         x = F.max_pool2d(self.conv4(x), 2)
         x = F.relu(x)
-        x = F.avg_pool2d(x, kernel_size=(5, 2))
+
+        # Note: changed by yongxinw. Changed the avg pool kernel size, or otherwise the dimension won't match
+        # x = F.avg_pool2d(x, kernel_size=(5, 2))
+        x = F.avg_pool2d(x, kernel_size=(7, 7))
+
         x = x.view(x.size(0), -1)
 
-        # Note: Added by yongxinw
-        x = self.fc(x)
+        # # Note: Added by yongxinw
+        # x = self.fc(x)
 
         return x
 
@@ -255,7 +259,6 @@ class net_1024(nn.Module):
         s0 = torch.zeros(pre_num * cur_num).cuda()
         s1 = torch.zeros(pre_num * cur_num).cuda()
         s2 = torch.zeros(pre_num * cur_num).cuda()
-
         for i in range(pre_num):
             pre_crop_ = pre_crop[i].cuda().unsqueeze(dim=0)
             pre_motion_ = pre_motion[i].cuda().unsqueeze(dim=0)

@@ -17,8 +17,8 @@ def main(info, timer):
     parser, settings_show = Config("setting/seq{}_config.yml".format(info[0]))
     for idx, data in enumerate(settings_show):
         print(data)
-    detection = MakeCell(np.loadtxt("test/MOT17-{}-{}/det.txt".format(info[0], info[1])))
-    manual_init = MakeCell(np.loadtxt("test/MOT17-{}-{}/res.txt".format(info[0], info[1])))
+    detection = MakeCell(np.loadtxt("test/MOT17-{}-{}/det.txt".format(info[0], info[1]), delimiter=","))
+    manual_init = MakeCell(np.loadtxt("test/MOT17-{}-{}/res.txt".format(info[0], info[1]), delimiter=","))
     StartFrame = len(manual_init)
     TotalFrame = len(detection)
     tracker_ = tracker(ID_assign_init=parser.ID_assign_init, ID_birth_init=parser.ID_birth_init,

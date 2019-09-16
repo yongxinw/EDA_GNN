@@ -62,13 +62,21 @@ class VideoData(object):
 
     def CurData(self, frame):
         data = self.gt[self.gt[:, 0] == (frame + 1)]
-
+        # Note: added by yongxinw
+        # Downsize the data so that they can fit memory. Note: I wonder how they train this with bs=100?
+        if len(data) > 25:
+            # data = data[data[np.random.choice(len(data), size=25, replace=False)]]
+            data = data[:25]
         return data
 
     def PreData(self, frame):
         DataList = []
         for i in range(5):
             data = self.gt[self.gt[:, 0] == (frame + 1 - i)]
+            # Note: added by yongxinw
+            # Downsize the data so that they can fit memory. Note: I wonder how they train this with bs=100?
+            if len(data) > 25:
+                data = data[:25]
             DataList.append(data)
 
         return DataList
@@ -148,6 +156,17 @@ class VideoData(object):
         cur = self.CurData(frame)
         pre = self.PreData(frame - 1)
 
+        # # Note: added by yongxinw
+        # # Downsize the data so that they can fit memory. Note: I wonder how they train this with bs=100?
+        # print(len(cur), len(pre))
+        # import ipdb
+        # ipdb.set_trace()
+        # if len(cur) >= 25:
+        #     cur = cur[np.random.choice(len(cur), size=25, replace=False)]
+        #
+        # if len(pre) >= 25:
+        #     pre = pre[np.random.choice(len(pre), size=25, replace=False)]
+
         cur_crop = self.Appearance(cur)
         pre_crop = self.Appearance(pre[0])
 
@@ -176,6 +195,7 @@ class Generator(object):
 
         if entirety == True:
             self.SequenceID = ["02", "04", "05", "09", "10", "11", "13"]
+            # self.SequenceID = ["04", "05"]
         else:
             self.SequenceID = ["09"]
 

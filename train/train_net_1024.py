@@ -17,11 +17,12 @@ def train(parser, generator, log, log_path):
     print("training final\n")
     model = net_1024.net_1024()
 
-    "----------------- pretrained model loading -----------------"
-    # print("loading pretrained model")
+    # "----------------- pretrained model loading -----------------"
+    print("loading pretrained model")
     # checkpoint = torch.load("/home/lallazhao/MOT/result/Oct-25-at-02-17-net_1024/net_1024_88.4.pth")
-    # model.load_state_dict(checkpoint["state_dict"])
-    "------------------------------------------------------------"
+    checkpoint = torch.load("/hdd/yongxinw/MOT17/experiments/debug1/net_1024.pth")
+    model.load_state_dict(checkpoint["state_dict"])
+    # "------------------------------------------------------------"
 
     model = model.cuda()
     net_param_dict = model.parameters()
@@ -88,12 +89,18 @@ def train(parser, generator, log, log_path):
         epoch_time.update(time.time() - start_time)
         start_time = time.time()
 
-    if parser.save_model:
-        save_file_path = osp.join(log_path, "net_1024.pth")
-        states = {
-            "state_dict": model.state_dict(),
-        }
-        torch.save(states, save_file_path)
+        if epoch % 100 == 0:
+            save_file_path = osp.join(log_path, "net_1024.pth")
+            states = {
+                "state_dict": model.state_dict(),
+            }
+            torch.save(states, save_file_path)
+    # if parser.save_model:
+    #     save_file_path = osp.join(log_path, "net_1024.pth")
+    #     states = {
+    #         "state_dict": model.state_dict(),
+    #     }
+    #     torch.save(states, save_file_path)
 
 
 def train_net_1024(model, generator, optimizer, criterion_BCE, criterion_CE, criterion_MSE):
