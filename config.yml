@@ -1,13 +1,13 @@
 # ------------------------- Options -------------------------
 mode                         : 0   # 0 for debug
 description                  : net_1024
-device                       : "3"
+device                       : "0"
 epochs                       : 40000
 gammas                       : [0.1, 0.1, 0.1]
 schedule                     : [10000, 20000, 30000]
 learning_rate                : 0.001
 optimizer                    : Adam
-entirety                     : True
+entirety                     : False
 model                        : net_1024
 # ----------------------- God Save Me -----------------------
 save_model                   : True
@@ -19,5 +19,5 @@ start_epoch                  : 0
 print_freq                   : 10
 checkpoint                   : 10
 n_threads                    : 2
-result                       : result
+result                       : /hdd/yongxinw/MOT17/experiments
 # --------------------------- End ---------------------------

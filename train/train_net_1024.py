@@ -70,6 +70,12 @@ def train(parser, generator, log, log_path):
                       "Acc {acc.val:6.3f} ({acc.avg:6.3f})\t"
                       "Acc_pos {acc_pos.val:6.3f} ({acc_pos.avg:6.3f})\t".format(
                 epoch, parser.epochs, batch_time=Batch_time, loss=Loss, acc=Acc, acc_pos=Acc_pos), log)
+            print('Epoch: [{:03d}/{:03d}]\t'
+                      'Time {batch_time.val:5.2f} ({batch_time.avg:5.2f})\t'
+                      'Loss {loss.val:6.3f} ({loss.avg:6.3f})\t'
+                      "Acc {acc.val:6.3f} ({acc.avg:6.3f})\t"
+                      "Acc_pos {acc_pos.val:6.3f} ({acc_pos.avg:6.3f})\t".format(
+                epoch, parser.epochs, batch_time=Batch_time, loss=Loss, acc=Acc, acc_pos=Acc_pos))
 
             Batch_time = AverageMeter()
             Loss = AverageMeter()

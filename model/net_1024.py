@@ -73,6 +73,9 @@ class ANet(nn.Module):
         self.conv3 = nn.Conv2d(int(self.ndf * 1.5), self.ndf * 2, kernel_size=3, stride=1, padding=1, bias=False)
         self.conv4 = nn.Conv2d(self.ndf * 2, self.ndf * 4, kernel_size=3, stride=1, padding=1, bias=False)
 
+        # Note: Added by yongxinw. The code will not work because of the mismatching shapes
+        self.fc = nn.Linear(384, 128)
+
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.xavier_uniform_(m.weight)
@@ -86,9 +89,11 @@ class ANet(nn.Module):
         x = F.relu(x)
         x = F.max_pool2d(self.conv4(x), 2)
         x = F.relu(x)
-
         x = F.avg_pool2d(x, kernel_size=(5, 2))
         x = x.view(x.size(0), -1)
+
+        # Note: Added by yongxinw
+        x = self.fc(x)
 
         return x
 
@@ -135,7 +140,6 @@ class embnet(nn.Module):
 
         temp_crop = pre_crop.sub(cur_crop)
         temp_coord = pre_coord.sub(cur_coord)
-
         crop = F.relu(self.crop_fc1(temp_crop))
         crop = F.relu(self.crop_fc2(crop))
         crop = self.crop_fc3(crop)
@@ -148,7 +152,7 @@ class embnet(nn.Module):
 
         pre_feature = torch.cat((pre_crop, pre_coord), dim=1)
         cur_feature = torch.cat((cur_crop, cur_coord), dim=1)
-
+        # print(cur_crop.shape, cur_coord.shape)
         return com, crop, coord, pre_feature, cur_feature
 
 

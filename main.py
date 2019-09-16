@@ -6,9 +6,9 @@
 
 import os.path as osp
 from utils import *
-from train import train_EmbeddingNet
-from train import train_LSTM
-from train import train_FuckUpNet
+# from train import train_EmbeddingNet
+# from train import train_LSTM
+# from train import train_FuckUpNet
 from train import train_net_1024
 import sys
 from Generator import Generator

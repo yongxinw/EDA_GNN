@@ -46,14 +46,17 @@ def FindMatch(list_id, list1, list2):
 class VideoData(object):
 
     def __init__(self, seq_id):
-        self.img = LoadImg("MOT17/MOT17/train/MOT17-{}-SDP/img1".format(seq_id))
-        self.gt = np.loadtxt("MOT17/label/{}_gt.txt".format(seq_id))
+        # self.img = LoadImg("MOT17/MOT17/train/MOT17-{}-SDP/img1".format(seq_id))
+        # self.gt = np.loadtxt("MOT17/label/{}_gt.txt".format(seq_id))
+
+        self.img = LoadImg("/hdd/yongxinw/MOT17/MOT17/train/MOT17-{}-SDP/img1".format(seq_id))
+        self.gt = np.loadtxt("/hdd/yongxinw/MOT17/label/{}_gt.txt".format(seq_id), delimiter=",")
 
         self.ImageWidth = self.img[0].size[0]
         self.ImageHeight = self.img[0].size[1]
 
         self.transforms = transforms.Compose([
-            transforms.Resize((224, 224)),
+            transforms.Resize((112, 112)),
             transforms.ToTensor()
         ])
 
