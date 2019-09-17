@@ -56,7 +56,7 @@ class VideoData(object):
         self.ImageHeight = self.img[0].size[1]
 
         self.transforms = transforms.Compose([
-            transforms.Resize((112, 112)),
+            transforms.Resize((112, 56)),
             transforms.ToTensor()
         ])
 
@@ -64,9 +64,9 @@ class VideoData(object):
         data = self.gt[self.gt[:, 0] == (frame + 1)]
         # Note: added by yongxinw
         # Downsize the data so that they can fit memory. Note: I wonder how they train this with bs=100?
-        if len(data) > 25:
-            # data = data[data[np.random.choice(len(data), size=25, replace=False)]]
-            data = data[:25]
+        # if len(data) > 25:
+        #     # data = data[data[np.random.choice(len(data), size=25, replace=False)]]
+        #     data = data[:25]
         return data
 
     def PreData(self, frame):
@@ -75,8 +75,8 @@ class VideoData(object):
             data = self.gt[self.gt[:, 0] == (frame + 1 - i)]
             # Note: added by yongxinw
             # Downsize the data so that they can fit memory. Note: I wonder how they train this with bs=100?
-            if len(data) > 25:
-                data = data[:25]
+            # if len(data) > 25:
+            #     data = data[:25]
             DataList.append(data)
 
         return DataList

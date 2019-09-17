@@ -18,10 +18,10 @@ def train(parser, generator, log, log_path):
     model = net_1024.net_1024()
 
     # "----------------- pretrained model loading -----------------"
-    print("loading pretrained model")
+    # print("loading pretrained model")
     # checkpoint = torch.load("/home/lallazhao/MOT/result/Oct-25-at-02-17-net_1024/net_1024_88.4.pth")
-    checkpoint = torch.load("/hdd/yongxinw/MOT17/experiments/debug1/net_1024.pth")
-    model.load_state_dict(checkpoint["state_dict"])
+    # checkpoint = torch.load("/hdd/yongxinw/MOT17/experiments/debug1/net_1024.pth")
+    # model.load_state_dict(checkpoint["state_dict"])
     # "------------------------------------------------------------"
 
     model = model.cuda()
@@ -71,12 +71,6 @@ def train(parser, generator, log, log_path):
                       "Acc {acc.val:6.3f} ({acc.avg:6.3f})\t"
                       "Acc_pos {acc_pos.val:6.3f} ({acc_pos.avg:6.3f})\t".format(
                 epoch, parser.epochs, batch_time=Batch_time, loss=Loss, acc=Acc, acc_pos=Acc_pos), log)
-            print('Epoch: [{:03d}/{:03d}]\t'
-                      'Time {batch_time.val:5.2f} ({batch_time.avg:5.2f})\t'
-                      'Loss {loss.val:6.3f} ({loss.avg:6.3f})\t'
-                      "Acc {acc.val:6.3f} ({acc.avg:6.3f})\t"
-                      "Acc_pos {acc_pos.val:6.3f} ({acc_pos.avg:6.3f})\t".format(
-                epoch, parser.epochs, batch_time=Batch_time, loss=Loss, acc=Acc, acc_pos=Acc_pos))
 
             Batch_time = AverageMeter()
             Loss = AverageMeter()

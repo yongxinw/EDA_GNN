@@ -73,7 +73,7 @@ class ANet(nn.Module):
         self.conv3 = nn.Conv2d(int(self.ndf * 1.5), self.ndf * 2, kernel_size=3, stride=1, padding=1, bias=False)
         self.conv4 = nn.Conv2d(self.ndf * 2, self.ndf * 4, kernel_size=3, stride=1, padding=1, bias=False)
 
-        # # Note: Added by yongxinw. The code will not work because of the mismatching shapes
+        # Note: Added by yongxinw. The code will not work because of the mismatching shapes
         # self.fc = nn.Linear(384, 128)
 
         for m in self.modules():
@@ -91,12 +91,12 @@ class ANet(nn.Module):
         x = F.relu(x)
 
         # Note: changed by yongxinw. Changed the avg pool kernel size, or otherwise the dimension won't match
-        # x = F.avg_pool2d(x, kernel_size=(5, 2))
-        x = F.avg_pool2d(x, kernel_size=(7, 7))
+        x = F.avg_pool2d(x, kernel_size=(5, 2))
+        # x = F.avg_pool2d(x, kernel_size=(7, 7))
 
         x = x.view(x.size(0), -1)
 
-        # # Note: Added by yongxinw
+        # Note: Added by yongxinw
         # x = self.fc(x)
 
         return x
@@ -139,6 +139,7 @@ class embnet(nn.Module):
     def forward(self, pre_crop, cur_crop, pre_coord, cur_coord):
         pre_crop = self.ANet(pre_crop)
         cur_crop = self.ANet(cur_crop)
+
         pre_coord = self.lstm(pre_coord)
         cur_coord = self.fc(cur_coord)
 
