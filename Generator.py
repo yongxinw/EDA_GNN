@@ -56,33 +56,35 @@ class VideoData(object):
         self.ImageHeight = self.img[0].size[1]
 
         self.transforms = transforms.Compose([
-            transforms.Resize((112, 56)),
+            transforms.Resize((84, 32)),
             transforms.ToTensor()
         ])
 
+        # note: added by yongxinw
+        self.name = "MOT17-{}".format(seq_id)
+
     def CurData(self, frame):
+        # Note: Added by yongxinw. Only use pedestrians
+        # data = self.gt[(self.gt[:, 0] == (frame + 1)) & (self.gt[:, 7] == 1)]
         data = self.gt[self.gt[:, 0] == (frame + 1)]
-        # Note: added by yongxinw
-        # Downsize the data so that they can fit memory. Note: I wonder how they train this with bs=100?
-        # if len(data) > 25:
-        #     # data = data[data[np.random.choice(len(data), size=25, replace=False)]]
-        #     data = data[:25]
+        if len(data) > 48:
+            data = data[:48]
+
         return data
 
     def PreData(self, frame):
         DataList = []
         for i in range(5):
-            data = self.gt[self.gt[:, 0] == (frame + 1 - i)]
-            # Note: added by yongxinw
-            # Downsize the data so that they can fit memory. Note: I wonder how they train this with bs=100?
-            # if len(data) > 25:
-            #     data = data[:25]
+            # Note: Added by yongxinw. Only use pedestrians
+            # data = self.gt[(self.gt[:, 0] == (frame + 1)) & (self.gt[:, 7] == 1)]
+            data = self.gt[self.gt[:, 0] == (frame + 1)]
+            if len(data) > 48:
+                data = data[:48]
             DataList.append(data)
 
         return DataList
 
     def TotalFrame(self):
-
         return len(self.img)
 
     def CenterCoordinate(self, SingleLineData):
@@ -156,6 +158,8 @@ class VideoData(object):
         cur = self.CurData(frame)
         pre = self.PreData(frame - 1)
 
+        # print(cur)
+        # print(pre)
         # # Note: added by yongxinw
         # # Downsize the data so that they can fit memory. Note: I wonder how they train this with bs=100?
         # print(len(cur), len(pre))
@@ -181,7 +185,7 @@ class VideoData(object):
         gt_matrix = np.zeros([len(pre_id), len(cur_id)])
         for i in range(len(index_pair) / 2):
             gt_matrix[index_pair[2 * i], index_pair[2 * i + 1]] = 1
-
+        # print(gt_matrix)
         return cur_crop, pre_crop, cur_motion, pre_motion, cur_id, pre_id, gt_matrix
 
 
@@ -194,10 +198,11 @@ class Generator(object):
         self.sequence = []
 
         if entirety == True:
-            self.SequenceID = ["02", "04", "05", "09", "10", "11", "13"]
+            self.SequenceID = ["04"]
+            # self.SequenceID = ["02", "04", "05", "09", "10", "11", "13"]
             # self.SequenceID = ["04", "05"]
         else:
-            self.SequenceID = ["09"]
+            self.SequenceID = ["04"]
 
         self.vis_save_path = "MOT17/visualize"
 
@@ -254,3 +259,19 @@ class Generator(object):
         cur_crop, pre_crop, cur_motion, pre_motion, cur_id, pre_id, gt_matrix = seq(frame)
 
         return cur_crop, pre_crop, cur_motion, pre_motion, gt_matrix
+
+    def test_num_peds(self):
+        seq_to_peds = {}
+        for seq in self.sequence:
+            total_frame = seq.TotalFrame()
+            seq_to_peds[seq.name] = 0
+            for f in range(5, total_frame):
+                cur_crop, pre_crop, cur_motion, pre_motion, cur_id, pre_id, gt_matrix = seq(f)
+                if len(cur_id) > seq_to_peds[seq.name]:
+                    seq_to_peds[seq.name] = len(cur_id)
+        print(seq_to_peds)
+
+
+if __name__ == "__main__":
+    gen = Generator(entirety=True)
+    gen.test_num_peds()

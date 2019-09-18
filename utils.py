@@ -103,6 +103,8 @@ def matrix_loss(matrix, gt_matrix, criterion_CE, criterion_MSE):
 def accuracy(input, target):
     assert input.size() == target.size()
 
+    # print(list(input.detach().cpu().numpy()))
+
     input[input < 0] = 0
     input[input > 0] = 1
     # print(list(input.detach().cpu().numpy()))
