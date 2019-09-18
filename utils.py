@@ -107,8 +107,7 @@ def accuracy(input, target):
 
     input[input < 0] = 0
     input[input > 0] = 1
-    # print(list(input.detach().cpu().numpy()))
-    # print(list(target.detach().cpu().numpy()))
+    # print(list(input.detach()log.cpu().numpy()))
     batch_size = input.size(0)
     pos_size = torch.sum(target)
 

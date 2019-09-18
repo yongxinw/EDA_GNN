@@ -8,7 +8,7 @@ import cv2
 sequence = "MOT17-02-DPM"
 # sequence = "MOT17-13-DPM"
 image_dir = "/hdd/yongxinw/MOT17/MOT17/train/{}/img1/".format(sequence)
-exp_dir = "/hdd/yongxinw/MOT17/experiments/debug1/{}".format(sequence)
+exp_dir = "/hdd/yongxinw/MOT17/experiments/debug2/{}".format(sequence)
 track_file = "Sep-16-at-19-53.txt"
 
 tracks = np.loadtxt(os.path.join(exp_dir, track_file))

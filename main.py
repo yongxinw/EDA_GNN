@@ -29,7 +29,7 @@ parser, settings_show = Config(config)
 os.environ["CUDA_VISIBLE_DEVICES"] = parser.device
 
 if parser.mode == 0:
-    log_path = osp.join(parser.result, 'debug4')
+    log_path = osp.join(parser.result, 'debug11')
 else:
     log_path = osp.join(parser.result, '{}-{}'.format(time_for_file(), parser.description))
 if not osp.exists(log_path):

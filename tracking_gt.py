@@ -44,7 +44,7 @@ def main(info, timer):
     PPPPrevData = manual_init[1]
     PPPPPrevData = manual_init[0]
 
-    res_path = "/hdd/yongxinw/MOT17/experiments/debug1/MOT17-{}-{}/{}.txt".format(info[0], info[1], time_for_file())
+    res_path = "/hdd/yongxinw/MOT17/experiments/debug2/MOT17-{}-{}/{}.txt".format(info[0], info[1], time_for_file())
     # res_init = np.loadtxt("test/MOT17-{}-{}/res.txt".format(info[0], info[1]))
     # with open(res_path, "w") as res:
     #     np.savetxt(res, res_init, fmt='%12.3f')

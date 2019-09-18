@@ -202,7 +202,7 @@ class Generator(object):
             # self.SequenceID = ["02", "04", "05", "09", "10", "11", "13"]
             # self.SequenceID = ["04", "05"]
         else:
-            self.SequenceID = ["04"]
+            self.SequenceID = ["11"]
 
         self.vis_save_path = "MOT17/visualize"
 
