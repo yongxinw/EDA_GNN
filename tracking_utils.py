@@ -9,7 +9,8 @@ import numpy as np
 
 def MakeCell(data):
     cell = []
-    frame_last = data[-1, 0]
+    # frame_last = data[-1, 0]
+    frame_last = data[:, 0].max()
     for i in range(1, int(frame_last) + 1):
         data_ = data[data[:, 0] == i]
         cell.append(data_.copy())
@@ -258,6 +259,7 @@ class tracker():
                 # step 3.2: death prediction
                 else:
                     PrevData_ = PrevData[PrevData[:, 1] == deathID].squeeze()
+                    print(PrevData)
                     if deathID in PPrevData[:, 1]:
                         PPrevData_ = PPrevData[PPrevData[:, 1] == deathID].squeeze()
                     else:

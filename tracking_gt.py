@@ -24,7 +24,8 @@ def main(info, timer):
     # detection = MakeCell(np.loadtxt("test/MOT17-{}-{}/det.txt".format(info[0], info[1])))
     # manual_init = MakeCell(np.loadtxt("test/MOT17-{}-{}/res.txt".format(info[0], info[1])))
 
-    detection = MakeCell(np.loadtxt("/hdd/yongxinw/MOT17/label/train/MOT17-{}-{}/gt/gt.txt".format(info[0], info[1]), delimiter=","))
+    # detection = MakeCell(np.loadtxt("/hdd/yongxinw/MOT17/label/train/MOT17-{}-{}/gt/gt.txt".format(info[0], info[1]), delimiter=","))
+    detection = MakeCell(np.loadtxt("/hdd/yongxinw/MOT17/label/train/MOT17-{}-{}/det/det.txt".format(info[0], info[1]), delimiter=","))
     manual_init = MakeCell(np.loadtxt("/hdd/yongxinw/MOT17/label/train/MOT17-{}-{}/gt/gt.txt".format(info[0], info[1]), delimiter=","))
 
     # manual_init = MakeCell(np.loadtxt("/hdd/yongxinw/MOT17/experiments/debug1/MOT17-{}-{}/res.txt".format(info[0], info[1])))
@@ -44,14 +45,16 @@ def main(info, timer):
     PPPPrevData = manual_init[1]
     PPPPPrevData = manual_init[0]
 
-    res_path = "/hdd/yongxinw/MOT17/experiments/debug2/MOT17-{}-{}/{}.txt".format(info[0], info[1], time_for_file())
-    # res_init = np.loadtxt("test/MOT17-{}-{}/res.txt".format(info[0], info[1]))
-    # with open(res_path, "w") as res:
-    #     np.savetxt(res, res_init, fmt='%12.3f')
-    #     res.close()
+    # res_path = "/hdd/yongxinw/MOT17/experiments/gt_tracks/MOT17-{}-{}/{}.txt".format(info[0], info[1], time_for_file())
+    res_path = "/hdd/yongxinw/MOT17/experiments/debug11/{}.txt".format(time_for_file())
 
-    # generator = TestGenerator(res_path, info)
-    generator = TestGeneratorGT(info)
+    # res_init = np.loadtxt("test/MOT17-{}-{}/res.txt".format(info[0], info[1]))
+    with open(res_path, "w") as res:
+        np.savetxt(res, np.vstack((PPPPPrevData, PPPPrevData, PPPrevData, PPrevData, PrevData))[:, :7], fmt='%12.3f')
+        res.close()
+
+    generator = TestGenerator(res_path, info)
+    # generator = TestGeneratorGT(info)
     BirthLog = [[], [], []]  # prev frame, negative ID, assign ID
     DeathLog = [[], []]  # death frame, death ID
     "----------------------------------------------------------------------------"
@@ -68,12 +71,13 @@ def main(info, timer):
         assert CurIDs.max() == -1 and CurIDs.min() == -1
 
         tik = time.time()
-        Amatrix = generator(frame=frame)
+        # Amatrix = generator(frame=frame)
+        Amatrix = generator(SeqID=0, frame=frame)
 
         assert Amatrix.shape[0] == PrevIDs.shape[0] and Amatrix.shape[1] == CurIDs.shape[0], \
             "Amatrix-{},{}, PrevIDs-{}, CurIDs-{}".format(
                 Amatrix.shape[0], Amatrix.shape[1], PrevIDs.shape[0], CurIDs.shape[0])
-        print(CurData.shape)
+        # print(CurData.shape)
         PrevData, PPrevData, PPPrevData, PPPPrevData, PPPPPrevData, BirthLog, DeathLog = tracker_(Amatrix=Amatrix,
                                                                                                   PrevIDs=PrevIDs,
                                                                                                   CurData=CurData,
@@ -86,9 +90,8 @@ def main(info, timer):
                                                                                                   DeathLog=DeathLog)
         tok = time.time()
         timer.sum(tok - tik)
-
         with open(res_path, "a") as res:
-            np.savetxt(res, PrevData, fmt="%12.3f")
+            np.savetxt(res, PrevData[:, :], fmt="%12.3f")
             res.close()
 
         print ("-----------------------> Finish Tracking Frame %d\n" % (frame + 1))
@@ -97,7 +100,7 @@ def main(info, timer):
     assert len(BirthLog[0]) == len(BirthLog[1]) == len(BirthLog[2])
     assert len(DeathLog[0]) == len(DeathLog[1])
 
-    res_data = np.loadtxt(res_path)
+    # res_data = np.loadtxt(res_path)
 
     # print("cleaning birth...")
     # for birth in range(len(BirthLog[0])):
@@ -132,7 +135,7 @@ def main(info, timer):
     #         index = np.intersect1d(frame_index, ID_index)
     #         res_data[index, 1] = -1
 
-    np.savetxt(res_path, res_data, fmt="%12.3f")
+    # np.savetxt(res_path, res_data, fmt="%12.3f")
 
     # MakeVideo(res_path, info, parser.fps, parser.FrameWidth, parser.FrameHeight)
 
@@ -140,9 +143,9 @@ def main(info, timer):
 if __name__ == "__main__":
     # seq = ["01", "06", "07", "08", "12", "14"]
     # seq = ["03"]
-    seq = ["02"]
+    seq = ["11"]
     # detector = ["DPM", "FRCNN", "SDP"]
-    detector = ["DPM"]
+    detector = ["FRCNN"]
     # detector = ["FRCNN"]
     # detector = ["SDP"]
     timer = timer()

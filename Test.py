@@ -42,8 +42,12 @@ class VideoData(object):
         # self.det = np.loadtxt("test/MOT17-{}-{}/det.txt".format(info[0], info[1]))
 
         # MOT15
-        self.img = LoadImg("MOT15/test/{}/img1".format(info))
-        self.det = np.loadtxt("test-MOT15/{}/det.txt".format(info))
+        # self.img = LoadImg("MOT15/test/{}/img1".format(info))
+        # self.det = np.loadtxt("test-MOT15/{}/det.txt".format(info))
+
+        self.img = LoadImg("/hdd/yongxinw/MOT17/MOT17/train/MOT17-{}-SDP/img1".format(info[0]))
+        # self.det = np.loadtxt("/hdd/yongxinw/MOT17/label/{}_gt.txt".format(info[0]), delimiter=",")
+        self.det = np.loadtxt("/hdd/yongxinw/MOT17/label/train/MOT17-{}-{}/det/det.txt".format(info[0], info[1]), delimiter=",")
 
         self.res_path = res_path
 
@@ -61,6 +65,7 @@ class VideoData(object):
 
     def PreData(self, frame):
         res = np.loadtxt(self.res_path)
+        # res = self.det
         DataList = []
         for i in range(5):
             data = res[res[:, 0] == (frame + 1 - i)]
@@ -72,6 +77,7 @@ class VideoData(object):
         return len(self.img)
 
     def CenterCoordinate(self, SingleLineData):
+        print(SingleLineData)
         x = (SingleLineData[2] + (SingleLineData[4] / 2)) / float(self.ImageWidth)
         y = (SingleLineData[3] + (SingleLineData[5] / 2)) / float(self.ImageHeight)
 
@@ -143,7 +149,8 @@ class TestGenerator(object):
 
     def __init__(self, res_path, info):
         net = net_1024.net_1024()
-        net_path = "SaveModel/net_1024_beta2.pth"
+        # net_path = "SaveModel/net_1024_beta2.pth"
+        net_path = "/hdd/yongxinw/MOT17/experiments/debug9/net_1024.pth"
         print("------->  loading net_1024")
         self.net = LoadModel(net, net_path)
 
@@ -195,6 +202,7 @@ class TestGenerator(object):
         # frame start with 5, exist frame start from 1
         sequence = self.sequence[SeqID]
         det_crop, det_motion, pre_crop, pre_motion, pre_id = sequence(frame)
+        print("network inference")
         with torch.no_grad():
             s0, s1, s2, s3, adj1, adj = self.net(pre_crop, det_crop, pre_motion, det_motion)
 

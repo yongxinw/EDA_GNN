@@ -64,22 +64,24 @@ class VideoData(object):
         self.name = "MOT17-{}".format(seq_id)
 
     def CurData(self, frame):
-        # Note: Added by yongxinw. Only use pedestrians
+        # Note: Added by yongxinw. Only use visible pedestrians
         # data = self.gt[(self.gt[:, 0] == (frame + 1)) & (self.gt[:, 7] == 1)]
+        # data = self.gt[(self.gt[:, 0] == (frame + 1)) & (self.gt[:, 7] == 1) & (self.gt[:, 8] >= 0.6)]
         data = self.gt[self.gt[:, 0] == (frame + 1)]
         if len(data) > 48:
-            data = data[:48]
+           data = data[:48]
 
         return data
 
     def PreData(self, frame):
         DataList = []
         for i in range(5):
-            # Note: Added by yongxinw. Only use pedestrians
-            # data = self.gt[(self.gt[:, 0] == (frame + 1)) & (self.gt[:, 7] == 1)]
-            data = self.gt[self.gt[:, 0] == (frame + 1)]
+            # Note: Added by yongxinw. Only use visible pedestrians
+            # data = self.gt[(self.gt[:, 0] == (frame + 1 - i)) & (self.gt[:, 7] == 1)]
+            # data = self.gt[(self.gt[:, 0] == (frame + 1 - i)) & (self.gt[:, 7] == 1) & (self.gt[:, 8] >= 0.6)]
+            data = self.gt[self.gt[:, 0] == (frame + 1 - i)]
             if len(data) > 48:
-                data = data[:48]
+               data = data[:48]
             DataList.append(data)
 
         return DataList
@@ -202,7 +204,7 @@ class Generator(object):
             # self.SequenceID = ["02", "04", "05", "09", "10", "11", "13"]
             # self.SequenceID = ["04", "05"]
         else:
-            self.SequenceID = ["11"]
+            self.SequenceID = ["09"]
 
         self.vis_save_path = "MOT17/visualize"
 
