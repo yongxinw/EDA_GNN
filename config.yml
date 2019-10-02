@@ -1,13 +1,13 @@
 # ------------------------- Options -------------------------
 mode                         : 0   # 0 for debug
 description                  : net_1024
-device                       : "1"
+device                       : "2"
 epochs                       : 40000
 gammas                       : [0.1, 0.1, 0.1]
 schedule                     : [10000, 20000, 30000]
 learning_rate                : 0.001
 optimizer                    : Adam
-entirety                     : False
+entirety                     : True
 model                        : net_1024
 # ----------------------- God Save Me -----------------------
 save_model                   : True
@@ -20,4 +20,7 @@ print_freq                   : 10
 checkpoint                   : 10
 n_threads                    : 2
 result                       : /hdd/yongxinw/MOT17/experiments
+# --------------------------- Anchor settings ---------------
+anchor_heights               : [84, 168]
+anchor_widths                : [32, 64]
 # --------------------------- End ---------------------------

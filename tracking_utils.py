@@ -81,7 +81,7 @@ class tracker():
         PrevBoxSize = PrevData_[4]
         CurBoxSize = CurData_[4]
 
-        if dis <= self.Distance and CurBoxSize < PrevBoxSize * (1 + self.BoxRation) and CurBoxSize > PrevBoxSize * (
+        if dis <= self.Distance and PrevBoxSize * (1 + self.BoxRation) > CurBoxSize > PrevBoxSize * (
                 1 - self.BoxRation):
             return True
         else:

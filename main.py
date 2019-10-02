@@ -12,6 +12,8 @@ from utils import *
 from train import train_net_1024
 import sys
 from Generator import Generator
+from Generator_MOT15 import GeneratorMOT15
+from Generator_MOT15_Anchors import GeneratorMOT15Anchor
 import numpy as np
 import random
 
@@ -29,7 +31,7 @@ parser, settings_show = Config(config)
 os.environ["CUDA_VISIBLE_DEVICES"] = parser.device
 
 if parser.mode == 0:
-    log_path = osp.join(parser.result, 'debug09')
+    log_path = osp.join(parser.result, 'train_mot15')
 else:
     log_path = osp.join(parser.result, '{}-{}'.format(time_for_file(), parser.description))
 if not osp.exists(log_path):
@@ -42,7 +44,10 @@ print_log("cudnn version : {}".format(torch.backends.cudnn.version()), log)
 for idx, data in enumerate(settings_show):
     print_log(data, log)
 
-generator = Generator(entirety=parser.entirety)
+# generator = Generator(entirety=parser.entirety)
+# generator = GeneratorMOT15(entirety=parser.entirety)
+generator = GeneratorMOT15Anchor(entirety=parser.entirety)
+
 
 if parser.model == "EmbeddingNet":
     train_EmbeddingNet.train(parser, generator, log, log_path)

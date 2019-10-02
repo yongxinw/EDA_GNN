@@ -101,7 +101,8 @@ def train_net_1024(model, generator, optimizer, criterion_BCE, criterion_CE, cri
     # switch to train mode
     model.train()
 
-    cur_crop, pre_crop, cur_motion, pre_motion, gt_matrix = generator()
+    # cur_crop, pre_crop, cur_motion, pre_motion, gt_matrix = generator()
+    cur_crop, pre_crop, cur_motion, pre_motion, gt_matrix, pos_mask, neg_mask, anchor_class, offsets = generator()
     # print(len(cur_crop), cur_crop[0].shape)
     # print(len(pre_crop), pre_crop[0].shape)
     # print(len(cur_motion), cur_motion[0].shape)

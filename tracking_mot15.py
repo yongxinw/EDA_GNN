@@ -14,12 +14,13 @@ np.set_printoptions(precision=2, suppress=True)
 def main(info, timer):
     "-------------------------------- initialize --------------------------------"
     # os.environ["CUDA_VISIBLE_DEVICES"] = "3"
-    parser, settings_show = Config("setting/seq{}_config.yml".format(info[0]))
+    parser, settings_show = Config("setting/{}_config.yml".format(info[0]))
     for idx, data in enumerate(settings_show):
         print(data)
 
-    detection = MakeCell(np.loadtxt("/hdd/yongxinw/MOT17/label/train/MOT17-{}-{}/det/det.txt".format(info[0], info[1]), delimiter=","))
-    manual_init = MakeCell(np.loadtxt("/hdd/yongxinw/MOT17/label/train/MOT17-{}-{}/gt/gt.txt".format(info[0], info[1]), delimiter=","))
+    detection = MakeCell(np.loadtxt("/hdd/yongxinw/2DMOT2015/train/{}/det/det.txt".format(info[0]), delimiter=","))
+    manual_init = MakeCell(np.loadtxt("/hdd/yongxinw/2DMOT2015/train/{}/gt/gt.txt".format(info[0]), delimiter=","))
+
 
     StartFrame = 5
     TotalFrame = len(detection)
@@ -37,17 +38,15 @@ def main(info, timer):
     PPPPPrevData = manual_init[0]
 
     # res_path = "/hdd/yongxinw/MOT17/experiments/gt_tracks/MOT17-{}-{}/{}.txt".format(info[0], info[1], time_for_file())
-    # res_dir = "/hdd/yongxinw/MOT15/experiments/train_mot15/MOT17-{}-{}".format(info[0], info[1])
-    res_dir = "/hdd/yongxinw/MOT15/new_experiments/train_mot15_train/results/mot17_train_frcnn_ourReimp"
+    # res_dir = "/hdd/yongxinw/MOT17/experiments/train_mot15/validation"
+    res_dir = "/hdd/yongxinw/MOT15/new_experiments/train_mot15_train/results/validation"
     if not os.path.exists(res_dir):
         os.makedirs(res_dir)
-    res_path = os.path.join(res_dir, "MOT17-{}-{}.txt".format(info[0], info[1]))
-
-    # res_path = "/hdd/yongxinw/MOT17/experiments/train_mot15/{}.txt".format(time_for_file())
+    res_path = os.path.join(res_dir, "{}.txt".format(info[0]))
 
     # res_init = np.loadtxt("test/MOT17-{}-{}/res.txt".format(info[0], info[1]))
     with open(res_path, "w") as res:
-        np.savetxt(res, np.vstack((PPPPPrevData, PPPPrevData, PPPrevData, PPrevData, PrevData))[:, :7], fmt='%12.3f')
+        np.savetxt(res, np.vstack((PPPPPrevData, PPPPrevData, PPPrevData, PPrevData, PrevData))[:, :], fmt='%12.3f')
         res.close()
 
     generator = TestGenerator(res_path, info)
@@ -92,7 +91,7 @@ def main(info, timer):
         tok = time.time()
         timer.sum(tok - tik)
         with open(res_path, "a") as res:
-            np.savetxt(res, PrevData[:, :9], fmt="%12.3f")
+            np.savetxt(res, PrevData[:, :], fmt="%12.3f")
             res.close()
 
         print ("-----------------------> Finish Tracking Frame %d\n" % (frame + 1))
@@ -142,8 +141,10 @@ def main(info, timer):
 
 
 if __name__ == "__main__":
-    seq = ["02", "04", "05", "09", "10", "11", "13"]
+    seq = ["TUD-Campus", "ETH-Sunnyday", "ETH-Pedcross2", "ADL-Rundle-8", "Venice-2", "KITTI-17"]
     detector = ["FRCNN"]
+    # detector = ["FRCNN"]
+    # detector = ["SDP"]
     timer = timer()
     for s in range(len(seq)):
         for d in range(len(detector)):

@@ -46,11 +46,11 @@ def FindMatch(list_id, list1, list2):
 class VideoData(object):
 
     def __init__(self, seq_id):
-        # self.img = LoadImg("MOT17/MOT17/train/MOT17-{}-SDP/img1".format(seq_id))
-        # self.gt = np.loadtxt("MOT17/label/{}_gt.txt".format(seq_id))
+        # self.img = LoadImg("2DMOT2015/2DMOT2015/train/2DMOT2015-{}-SDP/img1".format(seq_id))
+        # self.gt = np.loadtxt("2DMOT2015/label/{}_gt.txt".format(seq_id))
 
-        self.img = LoadImg("/hdd/yongxinw/MOT17/MOT17/train/MOT17-{}-SDP/img1".format(seq_id))
-        self.gt = np.loadtxt("/hdd/yongxinw/MOT17/label/{}_gt.txt".format(seq_id), delimiter=",")
+        self.img = LoadImg("/hdd/yongxinw/2DMOT2015/train/{}/img1".format(seq_id))
+        self.gt = np.loadtxt("/hdd/yongxinw/2DMOT2015/train/{}/gt/gt.txt".format(seq_id), delimiter=",")
 
         self.ImageWidth = self.img[0].size[0]
         self.ImageHeight = self.img[0].size[1]
@@ -61,13 +61,13 @@ class VideoData(object):
         ])
 
         # note: added by yongxinw
-        self.name = "MOT17-{}".format(seq_id)
+        self.name = "2DMOT2015-{}".format(seq_id)
 
     def CurData(self, frame):
         # Note: Added by yongxinw. Only use visible pedestrians
-        data = self.gt[(self.gt[:, 0] == (frame + 1)) & (self.gt[:, 7] == 1)]
+        # data = self.gt[(self.gt[:, 0] == (frame + 1)) & (self.gt[:, 7] == 1)]
         # data = self.gt[(self.gt[:, 0] == (frame + 1)) & (self.gt[:, 7] == 1) & (self.gt[:, 8] >= 0.6)]
-        # data = self.gt[self.gt[:, 0] == (frame + 1)]
+        data = self.gt[self.gt[:, 0] == (frame + 1)]
         # if len(data) > 52:
         #    data = data[:52]
 
@@ -77,9 +77,9 @@ class VideoData(object):
         DataList = []
         for i in range(5):
             # Note: Added by yongxinw. Only use pedestrians
-            data = self.gt[(self.gt[:, 0] == (frame + 1 - i)) & (self.gt[:, 7] == 1)]
+            # data = self.gt[(self.gt[:, 0] == (frame + 1 - i)) & (self.gt[:, 7] == 1)]
             # data = self.gt[(self.gt[:, 0] == (frame + 1 - i)) & (self.gt[:, 7] == 1) & (self.gt[:, 8] >= 0.6)]
-            # data = self.gt[self.gt[:, 0] == (frame + 1 - i)]
+            data = self.gt[self.gt[:, 0] == (frame + 1 - i)]
             # if len(data) > 52:
             #    data = data[:52]
             DataList.append(data)
@@ -87,6 +87,8 @@ class VideoData(object):
         return DataList
 
     def TotalFrame(self):
+        frames = np.sort(np.unique(self.gt[:, 0]))[6:]
+
         return len(self.img)
 
     def CenterCoordinate(self, SingleLineData):
@@ -191,7 +193,7 @@ class VideoData(object):
         return cur_crop, pre_crop, cur_motion, pre_motion, cur_id, pre_id, gt_matrix
 
 
-class Generator(object):
+class GeneratorMOT15(object):
     def __init__(self, entirety=False):
         """
 
@@ -201,12 +203,12 @@ class Generator(object):
 
         if entirety == True:
             # self.SequenceID = ["04"]
-            self.SequenceID = ["02", "04", "05", "09", "10", "11", "13"]
+            self.SequenceID = ["TUD-Stadtmitte", "ETH-Bahnhof", "ADL-Rundle-6", "KITTI-13"]
             # self.SequenceID = ["04", "05"]
         else:
             self.SequenceID = ["09"]
 
-        self.vis_save_path = "MOT17/visualize"
+        self.vis_save_path = "2DMOT2015/visualize"
 
         print("\n-------------------------- initialization --------------------------")
         for id in self.SequenceID:
@@ -257,7 +259,12 @@ class Generator(object):
         :return:
         """
         seq = random.choice(self.sequence)
-        frame = random.randint(5, seq.TotalFrame() - 1)
+        if seq.name == "2DMOT2015-KITTI-13":
+            valid_frames = list(range(10, 133)) + list(range(212, 340))
+            frame = valid_frames[np.random.choice(len(valid_frames))]
+        else:
+            frame = random.randint(5, seq.TotalFrame() - 1)
+        # print(seq.name, frame)
         cur_crop, pre_crop, cur_motion, pre_motion, cur_id, pre_id, gt_matrix = seq(frame)
 
         return cur_crop, pre_crop, cur_motion, pre_motion, gt_matrix

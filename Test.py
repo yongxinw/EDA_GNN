@@ -28,7 +28,11 @@ def LoadImg(img_path):
 
 def LoadModel(model, path):
     checkpoint = torch.load(path)
-    model.load_state_dict(checkpoint["state_dict"])
+    try:
+        model.load_state_dict(checkpoint["state_dict"])
+    except:
+        model.load_state_dict(checkpoint)
+
     model.cuda().eval()
 
     return model
@@ -37,16 +41,12 @@ def LoadModel(model, path):
 class VideoData(object):
 
     def __init__(self, info, res_path):
-        # MOT17
-        # self.img = LoadImg("MOT17/MOT17/test/MOT17-{}-{}/img1".format(info[0], info[1]))
-        # self.det = np.loadtxt("test/MOT17-{}-{}/det.txt".format(info[0], info[1]))
-
         # MOT15
-        # self.img = LoadImg("MOT15/test/{}/img1".format(info))
-        # self.det = np.loadtxt("test-MOT15/{}/det.txt".format(info))
+        # self.img = LoadImg("/hdd/yongxinw/2DMOT2015/train/{}/img1".format(info[0]))
+        # self.det = np.loadtxt("/hdd/yongxinw/2DMOT2015/train/{}/det/det.txt".format(info[0]), delimiter=",")
 
+        # # MOT17
         self.img = LoadImg("/hdd/yongxinw/MOT17/MOT17/train/MOT17-{}-SDP/img1".format(info[0]))
-        # self.det = np.loadtxt("/hdd/yongxinw/MOT17/label/{}_gt.txt".format(info[0]), delimiter=",")
         self.det = np.loadtxt("/hdd/yongxinw/MOT17/label/train/MOT17-{}-{}/det/det.txt".format(info[0], info[1]), delimiter=",")
 
         self.res_path = res_path
@@ -67,17 +67,22 @@ class VideoData(object):
         res = np.loadtxt(self.res_path)
         # res = self.det
         DataList = []
+        frames = np.unique(res[:, 0])
+        frames.sort()
+        # print(frames)
         for i in range(5):
-            data = res[res[:, 0] == (frame + 1 - i)]
-            DataList.append(data)
+            # data = res[res[:, 0] == (frame + 1 - i)]
+            frame = frames[-1 - i]
+            data = res[res[:, 0] == frame]
 
+            DataList.append(data)
+        # print(DataList)
         return DataList
 
     def TotalFrame(self):
         return len(self.img)
 
     def CenterCoordinate(self, SingleLineData):
-        print(SingleLineData)
         x = (SingleLineData[2] + (SingleLineData[4] / 2)) / float(self.ImageWidth)
         y = (SingleLineData[3] + (SingleLineData[5] / 2)) / float(self.ImageHeight)
 
@@ -150,17 +155,25 @@ class TestGenerator(object):
     def __init__(self, res_path, info):
         net = net_1024.net_1024()
         # net_path = "SaveModel/net_1024_beta2.pth"
-        net_path = "/hdd/yongxinw/MOT17/experiments/debug9/net_1024.pth"
+        # net_path = "/hdd/yongxinw/MOT17/experiments/debug11/net_1024.pth"
+        # net_path = "/hdd/yongxinw/MOT17/experiments/train_mot15/net_1024.pth"
+        net_path = "/hdd/yongxinw/MOT15/new_experiments/train_mot15_train/checkpoints/net_39500.pth"
         print("------->  loading net_1024")
+        print("-----------------> resuming from {}".format(net_path))
         self.net = LoadModel(net, net_path)
 
         self.sequence = []
 
+        # # MOT17
         print("------->  initializing  MOT17-{}-{} ...".format(info[0], info[1]))
         self.sequence.append(VideoData(info, res_path))
         print("------->  initialize  MOT17-{}-{}  done".format(info[0], info[1]))
 
-        self.vis_save_path = "test/visualize"
+        # MOT15
+        # print("------->  initializing  MOT15-{}...".format(info[0]))
+        # self.sequence.append(VideoData(info, res_path))
+        # print("------->  initialize  MOT15-{}  done".format(info[0]))
+        # self.vis_save_path = "test/visualize"
 
     def visualize(self, SeqID, frame, save_path=None):
         """
