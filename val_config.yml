@@ -20,6 +20,12 @@ print_freq                   : 10
 checkpoint                   : 10
 n_threads                    : 2
 result                       : /hdd/yongxinw/Det/experiments
+# --------------------------- match settings ----------------
+threshold                    : 0.4
+use_gt_match                 : True
+use_gt_anchor_class          : True
+use_gt_offsets               : True
+show_aligned_anchors         : False
 # --------------------------- Dataset settings --------------
 SequenceID                   : ["TUD-Stadtmitte"]
 #SequenceID                   : ["ETH-Bahnhof"]
@@ -29,7 +35,7 @@ anchor_widths                : [38, 48, 84]
 #anchor_heights               : [126]
 #anchor_widths                : [48]
 iou_pos_threshold            : 0.4
-iou_neg_threshold            : 0.1
+iou_neg_threshold            : 0.2
 classes                      : {"background": 0, "pedestrian": 1}
 start_ct                     : 84
 start_cl                     : 32

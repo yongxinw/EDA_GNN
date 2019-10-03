@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from torchvision import transforms
 from PIL import Image, ImageDraw
-from utils import build_anchors, np_vec_iou, visualize_boxes, random_colors
+from utils import build_anchors, np_vec_iou, visualize_boxes, random_colors, Config
 
 np.set_printoptions(suppress=True)
 
@@ -45,9 +45,27 @@ def FindMatch(list_id, list1, list2):
     return index_pair
 
 
+def FindMatchMultiple(list_id, gtid, anchor_ids):
+    """
+    Find matching indices between gt and anchors
+    :param list_id: id's shared by gt and anchors
+    :param gtid: list of gt id's
+    :param anchor_ids: list of anchor ids
+    :return:
+    """
+    index_pair = []
+    for index, id in enumerate(list_id):
+        index_gt = gtid.index(id)
+        list_indices_anchors = np.where(np.array(anchor_ids) == id)[0]
+        for index_anchor in list_indices_anchors:
+            index_pair.extend([index_gt, index_anchor])
+
+    return index_pair
+
+
 class VideoData(object):
 
-    def __init__(self, seq_id):
+    def __init__(self, seq_id, parser):
         # self.img = LoadImg("2DMOT2015/2DMOT2015/train/2DMOT2015-{}-SDP/img1".format(seq_id))
         # self.gt = np.loadtxt("2DMOT2015/label/{}_gt.txt".format(seq_id))
 
@@ -64,13 +82,16 @@ class VideoData(object):
 
         # self.anchor_heights = [84, 168, 252]
         # self.anchor_widths = [32, 64, 96]
-        self.anchor_heights = [126]
-        self.anchor_widths = [48]
-        self.start_ct = 84
-        self.start_cl = 32
+        self.anchor_heights = parser.anchor_heights
+        self.anchor_widths = parser.anchor_widths
+        self.start_ct = parser.start_ct
+        self.start_cl = parser.start_cl
 
-        self.iou_pos_threshold = 0.25
-        self.iou_neg_threshold = 0.1
+        self.gapH = parser.gapH
+        self.gapW = parser.gapW
+
+        self.iou_pos_threshold = parser.iou_pos_threshold
+        self.iou_neg_threshold = parser.iou_neg_threshold
 
         self.anchors = self.generate_anchors()
         # print(self.anchors)
@@ -78,9 +99,9 @@ class VideoData(object):
         # self.visualize_anchors()
         # for i in range(0, len(self.img)):
         #     self.build_targets(i, debug=True)
-        self.build_targets(0, debug=True)
+        # self.build_targets(0, debug=True)
 
-        self.classes = {0: "background", 1: "pedestrian"}
+        self.classes = parser.classes
 
         # note: added by yongxinw
         self.name = "2DMOT2015-{}".format(seq_id)
@@ -91,7 +112,7 @@ class VideoData(object):
             print(aw, ah, self.ImageWidth, self.ImageHeight)
             anchors.append(
                 build_anchors(self.start_ct - ah // 2, self.start_cl - aw // 2, aw, ah,
-                              self.ImageWidth, self.ImageHeight, gapH=81, gapW=41))
+                              self.ImageWidth, self.ImageHeight, gapH=self.gapH, gapW=self.gapW))
         return np.concatenate(anchors)
 
     def visualize_anchors(self):
@@ -101,7 +122,8 @@ class VideoData(object):
         image.save(osp.join("/hdd/yongxinw/Det/debug", "anchors.jpg"))
 
     def get_gt_data(self, frame):
-        gt = self.gt[self.gt[:, 0] == (frame + 1)]
+        # only consider the eligible ground truth boxes as per Table 2 in https://arxiv.org/pdf/1504.01942.pdf
+        gt = self.gt[(self.gt[:, 0] == (frame + 1)) & (self.gt[:, 6] == 1)]
         return gt
 
     def build_targets(self, frame, debug=False):
@@ -122,14 +144,15 @@ class VideoData(object):
         target_index[pos_mask] = np.argmax(IoU, axis=1)[pos_mask]
 
         # todo: deal with thresholded negative indices
-        neg_mask = np.max(IoU, axis=1) >= self.iou_neg_threshold
+        neg_mask = np.max(IoU, axis=1) < self.iou_neg_threshold
 
         # Assign the gt target's class label to the anchor
         anchor_class = target_index.copy()
-        anchor_class[anchor_class == -1] = 0  # Backgroud
-        anchor_class[anchor_class != -1] = 1  # Pedestrian
+        # background_mask = anchor_class == -1
+        anchor_class[~pos_mask] = 0  # Backgroud
+        anchor_class[pos_mask] = 1  # Pedestrian
 
-        # Calculate the bbox offsets from positive anchors to their assigned target gt
+        # Calculate the bbox offsets from POSITIVE anchors to their assigned target gt
         # according to SSD equation (2). https://arxiv.org/pdf/1512.02325.pdf
         targets = gt_boxes[target_index]
         ll_norm = (targets[:, 0] - self.anchors[:, 0]) / self.anchors[:, 2]  # g_hat_x = (g_x - d_x) / d_w
@@ -166,32 +189,28 @@ class VideoData(object):
                     id = gt_ids[target_j]
                     color_tmp = tuple([int(tmp * 255) for tmp in colors[int(id % max_color)]])
                     width = 2
-                    offset_j = offsets[j]
-                    gw, gh = np.exp(offset_j[2:]) * anchor_box[2:]
-                    gleft, gtop = offset_j[:2] * anchor_box[2:] + anchor_box[:2]
-                    anchor_box_aligned = [gleft, gtop, gw, gh]
-                    image = visualize_boxes(image, [anchor_box_aligned], width=width, outline=color_tmp)
+                    # offset_j = offsets[j]
+                    # gw, gh = np.exp(offset_j[2:]) * anchor_box[2:]
+                    # gleft, gtop = offset_j[:2] * anchor_box[2:] + anchor_box[:2]
+                    # anchor_box_aligned = [gleft, gtop, gw, gh]
+                    # image = visualize_boxes(image, [anchor_box_aligned], width=width, outline=color_tmp)
+                    image = visualize_boxes(image, [anchor_box], width=width, outline=color_tmp)
             # save images for debug
             os.makedirs("/hdd/yongxinw/Det/debug", exist_ok=True)
             image.save(osp.join("/hdd/yongxinw/Det/debug", "anchors_{:03d}.jpg".format(frame + 1)))
 
         return pos_mask, neg_mask, gt_data, target_index, anchor_class, offsets, self.anchors
 
-    def CurData(self, frame):
-        # Note: Added by yongxinw. Only use visible pedestrians
-        pos_mask, neg_mask, gt_data, target_index, anchor_class, offsets, anchors = self.build_targets(frame)
+    def CurData(self, frame, debug=False):
+        pos_mask, neg_mask, gt_data, target_index, anchor_class, offsets, anchors = self.build_targets(frame, debug)
 
         return pos_mask, neg_mask, gt_data, target_index, anchor_class, offsets, anchors
 
     def PreData(self, frame):
         DataList = []
         for i in range(5):
-            # Note: Added by yongxinw. Only use pedestrians
-            # data = self.gt[(self.gt[:, 0] == (frame + 1 - i)) & (self.gt[:, 7] == 1)]
-            # data = self.gt[(self.gt[:, 0] == (frame + 1 - i)) & (self.gt[:, 7] == 1) & (self.gt[:, 8] >= 0.6)]
-            data = self.gt[self.gt[:, 0] == (frame + 1 - i)]
-            # if len(data) > 52:
-            #    data = data[:52]
+            # only consider the eligible ground truth boxes as per Table 2 in https://arxiv.org/pdf/1504.01942.pdf
+            data = self.gt[(self.gt[:, 0] == (frame + 1 - i)) & (self.gt[:, 6] == 1)]
             DataList.append(data)
 
         return DataList
@@ -243,7 +262,7 @@ class VideoData(object):
             crop = img.crop((int(box[i, 0]), int(box[i, 1]), int(box[i, 0]) + int(box[i, 2]),
                              int(box[i, 1]) + int(box[i, 3])))
             crop = self.transforms(crop)
-            crop = crop.unsqueeze(0)
+            # crop = crop.unsqueeze(0)
             appearace.append(crop)
 
         return appearace
@@ -299,16 +318,15 @@ class VideoData(object):
             anchor_ids.append(anchor_gtid)
         return anchor_ids
 
-    def __call__(self, frame, debug=False):
+    def __call__(self, frame, debug=False, validation=False):
         """
 
         :param frame:
         :return:
         """
         assert frame >= 5 and frame < self.TotalFrame()
-        frame = 6
         # cur = self.CurData(frame)
-        pos_mask, neg_mask, gt_data, target_index, anchor_class, offsets, anchors = self.CurData(frame)
+        pos_mask, neg_mask, gt_data, target_index, anchor_class, offsets, anchors = self.CurData(frame, debug=debug)
         pre = self.PreData(frame - 1)
 
         # cur_crop = self.Appearance(cur)
@@ -320,24 +338,24 @@ class VideoData(object):
         pre_crop = self.BoxAppearance(frame-1, pre[0][:, 2:6])
 
         # visualize crops for debug
-        if debug:
-            from torchvision.utils import save_image
-
-            save_image(torch.cat(cur_crop, dim=3), filename=osp.join("/hdd/yongxinw/Det/debug", "crops_{:03d}.jpg".format(frame + 1)), nrow=1, padding=2)
-
-            im = Image.open(osp.join("/hdd/yongxinw/Det/debug", "crops_{:03d}.jpg".format(frame + 1)))
-            draw = ImageDraw.Draw(im)
-            print(im.size)
-            max_color = 5
-            colors = random_colors(max_color, bright=True)
-
-            for i, idx in enumerate(target_index):
-                if idx != -1:
-                    gt_id = gt_data[idx][1]
-                    color_tmp = tuple([int(tmp * 255) for tmp in colors[int(gt_id % max_color)]])
-                    box = [i*32, 0, i*32 + 32, 84]
-                    draw.rectangle(box, width=3, outline=color_tmp)
-            im.save(osp.join("/hdd/yongxinw/Det/debug", "verify_{:03d}.jpg".format(frame + 1)))
+        # if debug:
+        #     from torchvision.utils import save_image
+        #
+        #     save_image(torch.cat(cur_crop, dim=3), filename=osp.join("/hdd/yongxinw/Det/debug", "crops_{:03d}.jpg".format(frame + 1)), nrow=1, padding=2)
+        #
+        #     im = Image.open(osp.join("/hdd/yongxinw/Det/debug", "crops_{:03d}.jpg".format(frame + 1)))
+        #     draw = ImageDraw.Draw(im)
+        #     print(im.size)
+        #     max_color = 5
+        #     colors = random_colors(max_color, bright=True)
+        #
+        #     for i, idx in enumerate(target_index):
+        #         if idx != -1:
+        #             gt_id = gt_data[idx][1]
+        #             color_tmp = tuple([int(tmp * 255) for tmp in colors[int(gt_id % max_color)]])
+        #             box = [i*32, 0, i*32 + 32, 84]
+        #             draw.rectangle(box, width=3, outline=color_tmp)
+        #     im.save(osp.join("/hdd/yongxinw/Det/debug", "verify_{:03d}.jpg".format(frame + 1)))
 
         # extract motion features for anchors and previous frames (using gt)
         # motion input to regression/classification head for offsets/anchor_class, and gt_matrix
@@ -351,36 +369,40 @@ class VideoData(object):
         pre_id = self.GetID(pre[0])
 
         list_id = [x for x in pre_id if x in cur_id]
-        index_pair = FindMatch(list_id, pre_id, cur_id)
+        index_pair = FindMatchMultiple(list_id, pre_id, cur_id)
         gt_matrix = np.zeros([len(pre_id), len(cur_id)])
         for i in range(len(index_pair) // 2):
             gt_matrix[index_pair[2 * i], index_pair[2 * i + 1]] = 1
 
-        return cur_crop, pre_crop, cur_motion, pre_motion, gt_matrix, pos_mask, neg_mask, anchor_class, offsets
+        if not validation:
+            return cur_crop, pre_crop, cur_motion, pre_motion, gt_matrix, pos_mask, neg_mask, anchor_class, offsets
+        else:
+            curr_frame = self.img[frame]
+            prev_frame = self.img[frame-1]
+            prev_data = pre[0]
+            curr_data = gt_data
+            return cur_crop, pre_crop, cur_motion, pre_motion, gt_matrix, pos_mask, neg_mask, anchor_class, offsets, \
+                   curr_frame, curr_data, prev_frame, prev_data, anchors
 
 
 class GeneratorMOT15Anchor(object):
-    def __init__(self, entirety=False):
+    def __init__(self, parser, entirety=False, val=False):
         """
 
         :param entirety:
         """
         self.sequence = []
 
-        if entirety == True:
-            # self.SequenceID = ["04"]
-            self.SequenceID = ["TUD-Stadtmitte", "ETH-Bahnhof", "ADL-Rundle-6", "KITTI-13"]
-            # self.SequenceID = ["04", "05"]
-        else:
-            # self.SequenceID = ["ETH-Bahnhof"]
-            self.SequenceID = ["TUD-Stadtmitte"]
+        self.SequenceID = parser.SequenceID
+
+        self.validation = val
 
         self.vis_save_path = "2DMOT2015/visualize"
 
         print("\n-------------------------- initialization --------------------------")
         for id in self.SequenceID:
             print("initializing sequence {} ...".format(id))
-            self.sequence.append(VideoData(id))
+            self.sequence.append(VideoData(id, parser=parser))
             print("initialize {} done".format(id))
         print("------------------------------ done --------------------------------\n")
 
@@ -420,23 +442,36 @@ class GeneratorMOT15Anchor(object):
         np.savetxt(osp.join(save_path, "pre_id.txt"), np.array(pre_id).transpose(), fmt="%d")
         np.savetxt(osp.join(save_path, "cur_id.txt"), np.array(cur_id).transpose(), fmt="%d")
 
-    def __call__(self, debug=False):
+    def __call__(self, debug=False, frame=None):
         """
 
         :return:
         """
-        seq = random.choice(self.sequence)
-        if seq.name == "2DMOT2015-KITTI-13":
-            valid_frames = list(range(10, 133)) + list(range(212, 340))
-            frame = valid_frames[np.random.choice(len(valid_frames))]
-        else:
-            frame = random.randint(5, seq.TotalFrame() - 1)
-        # print(seq.name, frame)
-        # cur_crop, pre_crop, cur_motion, pre_motion, gt_matrix = seq(frame, debug)
-        cur_crop, pre_crop, cur_motion, pre_motion, gt_matrix, pos_mask, \
-        neg_mask, anchor_class, offsets = seq(f)
+        if not self.validation:
+            seq = random.choice(self.sequence)
+            if frame is None:
+                if seq.name == "2DMOT2015-KITTI-13":
+                    valid_frames = list(range(10, 133)) + list(range(212, 340))
+                    frame = valid_frames[np.random.choice(len(valid_frames))]
+                else:
+                    frame = random.randint(5, seq.TotalFrame() - 1)
 
-        return cur_crop, pre_crop, cur_motion, pre_motion, gt_matrix, pos_mask, neg_mask, anchor_class, offsets
+            # print(seq.name, frame)
+            # cur_crop, pre_crop, cur_motion, pre_motion, gt_matrix = seq(frame, debug)
+            cur_crop, pre_crop, cur_motion, pre_motion, gt_matrix, pos_mask, \
+            neg_mask, anchor_class, offsets = seq(frame, debug)
+
+            return cur_crop, pre_crop, cur_motion, pre_motion, gt_matrix, pos_mask, neg_mask, \
+                   torch.Tensor(anchor_class).long(), \
+                   torch.Tensor(offsets).float()
+        else:
+            assert frame is not None, "frame number must be provided for validation"
+            seq = random.choice(self.sequence)
+            cur_crop, pre_crop, cur_motion, pre_motion, gt_matrix, pos_mask, neg_mask, anchor_class, offsets, \
+            curr_frame, curr_data, prev_frame, prev_data, anchors = seq(frame, debug, validation=True)
+
+            return cur_crop, pre_crop, cur_motion, pre_motion, gt_matrix, pos_mask, neg_mask, anchor_class, offsets, \
+                   curr_frame, curr_data, prev_frame, prev_data, anchors
 
     def test_num_peds(self):
         seq_to_peds = {}
@@ -453,6 +488,8 @@ class GeneratorMOT15Anchor(object):
 
 
 if __name__ == "__main__":
-    gen = GeneratorMOT15Anchor(entirety=False)
-    gen(debug=True)
+    config = osp.join(os.path.abspath(os.curdir), "config.yml")
+    parser, settings_show = Config(config)
+    gen = GeneratorMOT15Anchor(parser=parser, entirety=False, val=False)
+    gen(frame=6, debug=True)
     # gen.test_num_peds()

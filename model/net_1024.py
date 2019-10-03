@@ -90,14 +90,11 @@ class ANet(nn.Module):
         x = F.max_pool2d(self.conv4(x), 2)
         x = F.relu(x)
 
-        # Note: changed by yongxinw. Changed the avg pool kernel size, or otherwise the dimension won't match
+        # Note: dimension problem has been fixed by using 84x32 input size
         x = F.avg_pool2d(x, kernel_size=(5, 2))
-        # x = F.avg_pool2d(x, kernel_size=(7, 7))
 
         x = x.view(x.size(0), -1)
 
-        # Note: Added by yongxinw
-        # x = self.fc(x)
 
         return x
 
@@ -182,6 +179,8 @@ class GraphConvolution(Module):
         return adj_norm, adj_t_norm
 
     def forward(self, pre, cur, adj):
+        # TODO: replace this with current GCN libraries
+        # NOTE: this is not exactly a GCN, because they didn't take into account the node's own feature
         pre_ = torch.mm(pre, self.weight)
         cur_ = torch.mm(cur, self.weight)
 
@@ -214,6 +213,14 @@ class GCN(nn.Module):
         # self.fc2 = nn.Sequential(nn.Linear(144, 72, bias=False), nn.ReLU(), nn.Linear(72, 36, bias=False), nn.ReLU(),
         #                          nn.Linear(36, 1, bias=False))
 
+        self.regression_head = nn.Sequential(
+            nn.Linear(planes, 4)
+        )
+
+        self.classification_head = nn.Sequential(
+            nn.Linear(planes, 2)  # class only has {bg, pedestrian} 2 types
+        )
+
         for m in self.modules():
             if isinstance(m, nn.Linear):
                 nn.init.normal_(m.weight, mean=0, std=0.01)
@@ -240,7 +247,10 @@ class GCN(nn.Module):
         # pre, cur = self.gc2(pre, cur, adj)
         # score2, adj = self.MLP(self.fc2, pre, cur, adj)
 
-        return score, adj
+        # TODO: use multiple layers of GCN?
+        box_pred = self.regression_head(cur)
+        cls_pred = self.classification_head(cur)
+        return box_pred, cls_pred, score, adj
 
 
 class net_1024(nn.Module):
@@ -260,6 +270,8 @@ class net_1024(nn.Module):
         s0 = torch.zeros(pre_num * cur_num).cuda()
         s1 = torch.zeros(pre_num * cur_num).cuda()
         s2 = torch.zeros(pre_num * cur_num).cuda()
+
+        # TODO: optimize the following initialization
         for i in range(pre_num):
             pre_crop_ = pre_crop[i].cuda().unsqueeze(dim=0)
             pre_motion_ = pre_motion[i].cuda().unsqueeze(dim=0)
@@ -275,6 +287,6 @@ class net_1024(nn.Module):
                 pre_feature[i, :] = pre
                 cur_feature[j, :] = cur
 
-        s3, adj = self.gc(pre_feature, cur_feature, adj1)
+        box_pred, cls_pred, s3, adj = self.gc(pre_feature, cur_feature, adj1)
 
-        return s0, s1, s2, s3, adj1, adj
+        return s0, s1, s2, s3, adj1, adj, box_pred, cls_pred

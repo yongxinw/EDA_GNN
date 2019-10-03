@@ -9,7 +9,7 @@ from utils import *
 # from train import train_EmbeddingNet
 # from train import train_LSTM
 # from train import train_FuckUpNet
-from train import train_net_1024
+from train import train_net_1024, train_net_1024_detection
 import sys
 from Generator import Generator
 from Generator_MOT15 import GeneratorMOT15
@@ -31,11 +31,12 @@ parser, settings_show = Config(config)
 os.environ["CUDA_VISIBLE_DEVICES"] = parser.device
 
 if parser.mode == 0:
-    log_path = osp.join(parser.result, 'train_mot15')
+    log_path = osp.join(parser.result, 'train_mot15_w_detect_3anchors')
 else:
     log_path = osp.join(parser.result, '{}-{}'.format(time_for_file(), parser.description))
-if not osp.exists(log_path):
-    os.mkdir(log_path)
+
+os.makedirs(log_path, exist_ok=True)
+
 log = open(osp.join(log_path, 'log.log'), 'w')
 
 print_log("python version : {}".format(sys.version.replace('\n', ' ')), log)
@@ -46,7 +47,7 @@ for idx, data in enumerate(settings_show):
 
 # generator = Generator(entirety=parser.entirety)
 # generator = GeneratorMOT15(entirety=parser.entirety)
-generator = GeneratorMOT15Anchor(entirety=parser.entirety)
+generator = GeneratorMOT15Anchor(parser=parser, entirety=parser.entirety, val=False)
 
 
 if parser.model == "EmbeddingNet":
@@ -57,6 +58,8 @@ elif parser.model == "FuckUpNet":
     train_FuckUpNet.train(parser, generator, log, log_path)
 elif parser.model == "net_1024":
     train_net_1024.train(parser, generator, log, log_path)
+elif parser.model == "net_1024_detect":
+    train_net_1024_detection.train(parser, generator, log, log_path)
 else:
     raise NotImplementedError
 
